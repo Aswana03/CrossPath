@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "587236371168",
+    "project_id": "crosspath-86c06",
+    "storage_bucket": "crosspath-86c06.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:587236371168:android:bbfd32f955e93bf5c53e85",
+        "android_client_info": {
+          "package_name": "com.aswana.crosspath"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyClK3r7HA0aBau0W9NkwYDHGS_08yZgd70"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
