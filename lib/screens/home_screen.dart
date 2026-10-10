@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import 'journey_screen.dart';
 import 'profile_setup_screen.dart';
+import 'profile_screen.dart';
 import 'active_match_test_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -119,7 +120,7 @@ class _HomeScreenState extends State<HomeScreen> {
         return const JourneyScreen();
 
       case 2:
-        return _buildProfilePage();
+        return const ProfileScreen();
 
       default:
         return _buildHomePage();

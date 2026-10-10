@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../services/active_match_service.dart';
@@ -22,80 +24,92 @@ class _DiscoverMatchScreenState
   final DiscoverService _discoverService =
       DiscoverService();
 
-  bool _isLoading = true;
-  bool _isDiscovering = false;
-  bool _hasDiscovered = false;
+  final FirebaseFirestore _firestore =
+      FirebaseFirestore.instance;
 
-  bool _isMutual = false;
+  final FirebaseAuth _auth =
+      FirebaseAuth.instance;
+
+  bool _isDiscovering = false;
+
+  Map<String, dynamic>? _revealedProfile;
 
   @override
   void initState() {
     super.initState();
-    _loadDiscoveryState();
   }
 
-  Future<void> _loadDiscoveryState() async {
-    try {
-      final result =
-          await _discoverService.getDiscovery(
-        otherUserId: widget.match.userId,
-      );
+  Stream<DiscoverResult?> _discoveryStream() async* {
+    final currentUser = _auth.currentUser;
 
-      if (!mounted) return;
+    if (currentUser == null) {
+      yield null;
+      return;
+    }
 
-      setState(() {
-        if (result != null) {
-          _hasDiscovered = result.iDiscovered;
-          _isMutual = result.isMutual;
-        }
+    final discoveryId =
+        _discoverService.createDiscoveryId(
+      currentUser.uid,
+      widget.match.userId,
+    );
 
-        _isLoading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
+    await for (final snapshot in _firestore
+        .collection('discoveries')
+        .doc(discoveryId)
+        .snapshots()) {
+      if (!snapshot.exists) {
+        yield null;
+        continue;
+      }
 
-      setState(() {
-        _isLoading = false;
-      });
+      final data = snapshot.data();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Could not load discovery status: $e',
-          ),
-        ),
+      if (data == null) {
+        yield null;
+        continue;
+      }
+
+      final userA = data['userA'] as String;
+      final userB = data['userB'] as String;
+
+      final currentUserIsA =
+          currentUser.uid == userA;
+
+      final iDiscovered = currentUserIsA
+          ? data['userADiscovered'] == true
+          : data['userBDiscovered'] == true;
+
+      final otherUserDiscovered =
+          currentUserIsA
+              ? data['userBDiscovered'] == true
+              : data['userADiscovered'] == true;
+
+      yield DiscoverResult(
+        discoveryId: discoveryId,
+        iDiscovered: iDiscovered,
+        otherUserDiscovered:
+            otherUserDiscovered,
+        isMutual:
+            iDiscovered && otherUserDiscovered,
       );
     }
   }
 
   Future<void> _discover() async {
-    if (_isDiscovering || _isMutual) return;
+    if (_isDiscovering) return;
 
     setState(() {
       _isDiscovering = true;
     });
 
     try {
-      final result =
-          await _discoverService.discover(
+      await _discoverService.discover(
         otherUserId: widget.match.userId,
         journeyId: widget.match.journeyId,
         score: widget.match.score.totalScore,
       );
-
-      if (!mounted) return;
-
-      setState(() {
-        _hasDiscovered = result.iDiscovered;
-        _isMutual = result.isMutual;
-        _isDiscovering = false;
-      });
     } catch (e) {
       if (!mounted) return;
-
-      setState(() {
-        _isDiscovering = false;
-      });
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -104,117 +118,148 @@ class _DiscoverMatchScreenState
           ),
         ),
       );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isDiscovering = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadRevealedProfile() async {
+    if (_revealedProfile != null) return;
+
+    try {
+      final document = await _firestore
+          .collection('users')
+          .doc(widget.match.userId)
+          .get();
+
+      if (!document.exists) return;
+
+      final data = document.data();
+
+      if (!mounted || data == null) return;
+
+      setState(() {
+        _revealedProfile = data;
+      });
+    } catch (e) {
+      debugPrint(
+        'Could not load revealed profile: $e',
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final score = widget.match.score;
-
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF7FA),
+      backgroundColor:
+          const Color(0xFFFFF7FA),
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
         title: const Text(
           'Discover',
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            color: Color(0xFF2D1B24),
           ),
         ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
       ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                color: Color(0xFFE91E63),
-              ),
-            )
-          : SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(
-                  20,
-                  10,
-                  20,
-                  30,
-                ),
-                child: Column(
-                  children: [
-                    _buildAnonymousHeader(),
-                    const SizedBox(height: 20),
-                    _buildScoreCard(score),
-                    const SizedBox(height: 16),
-                    _buildPrivacyCard(),
-                    const SizedBox(height: 24),
-                    _buildActionSection(),
-                  ],
-                ),
-              ),
+      body: StreamBuilder<DiscoverResult?>(
+        stream: _discoveryStream(),
+        builder: (context, snapshot) {
+          final result = snapshot.data;
+
+          if (result?.isMutual == true) {
+            _loadRevealedProfile();
+          }
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(
+              20,
+              10,
+              20,
+              30,
             ),
+            child: Column(
+              children: [
+                _buildHeader(),
+
+                const SizedBox(height: 20),
+
+                _buildScoreCard(),
+
+                const SizedBox(height: 18),
+
+                _buildPrivacyCard(),
+
+                const SizedBox(height: 20),
+
+                if (result?.isMutual == true)
+                  _buildMutualRevealCard()
+                else if (result?.iDiscovered == true)
+                  _buildWaitingCard(
+                    otherUserDiscovered:
+                        result?.otherUserDiscovered ??
+                            false,
+                  )
+                else
+                  _buildDiscoverButton(),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
-  Widget _buildAnonymousHeader() {
+  Widget _buildHeader() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 24,
+        vertical: 28,
+      ),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [
-            Color(0xFFFFE4EF),
-            Color(0xFFFFF5F9),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+        color: const Color(0xFFFFEEF5),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(40),
+          bottomRight: Radius.circular(40),
         ),
-        borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: const Color(0xFFF8BBD0),
+          color: Colors.pink.shade100,
         ),
       ),
-      child: Column(
+      child: const Column(
         children: [
-          Container(
-            width: 76,
-            height: 76,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: const Color(0xFFE91E63),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFFE91E63)
-                      .withValues(alpha: 0.20),
-                  blurRadius: 20,
-                  spreadRadius: 3,
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.people_alt_outlined,
-              size: 38,
-              color: Colors.white,
-            ),
+          Icon(
+            Icons.auto_awesome,
+            color: Colors.pinkAccent,
+            size: 38,
           ),
-          const SizedBox(height: 18),
-          const Text(
+
+          SizedBox(height: 12),
+
+          Text(
             'Someone crossed your path',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 22,
+              fontSize: 29,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF2D1B24),
             ),
           ),
-          const SizedBox(height: 8),
-          const Text(
-            'You and another traveler shared a '
-            'meaningful journey.',
+
+          SizedBox(height: 12),
+
+          Text(
+            'You and another traveler shared a meaningful journey.',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 17,
+              color: Colors.black54,
               height: 1.5,
-              color: Color(0xFF6D5963),
             ),
           ),
         ],
@@ -222,20 +267,20 @@ class _DiscoverMatchScreenState
     );
   }
 
-  Widget _buildScoreCard(MatchScore score) {
-    final total = score.totalScore;
+  Widget _buildScoreCard() {
+    final score = widget.match.score;
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
+            color: Colors.pink.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -244,48 +289,57 @@ class _DiscoverMatchScreenState
           const Text(
             'MATCH SCORE',
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: FontWeight.bold,
-              letterSpacing: 1.5,
-              color: Color(0xFF8A6875),
+              letterSpacing: 2,
+              color: Colors.black54,
             ),
           ),
-          const SizedBox(height: 8),
+
+          const SizedBox(height: 12),
+
           Text(
-            '${total.toStringAsFixed(0)}%',
+            '${score.totalScore.round()}%',
             style: const TextStyle(
-              fontSize: 44,
+              fontSize: 58,
               fontWeight: FontWeight.bold,
-              color: Color(0xFFE91E63),
+              color: Colors.pinkAccent,
             ),
           ),
+
           const SizedBox(height: 20),
-          _buildScoreRow(
+
+          _scoreRow(
             'Route overlap',
             score.routeScore,
             35,
           ),
-          _buildScoreRow(
+
+          _scoreRow(
             'Destination',
             score.destinationScore,
             25,
           ),
-          _buildScoreRow(
+
+          _scoreRow(
             'Repeated crossings',
             score.crossingScore,
             15,
           ),
-          _buildScoreRow(
+
+          _scoreRow(
             'Shared interests',
             score.interestScore,
             15,
           ),
-          _buildScoreRow(
+
+          _scoreRow(
             'Direction',
             score.directionScore,
             5,
           ),
-          _buildScoreRow(
+
+          _scoreRow(
             'Time overlap',
             score.timeScore,
             5,
@@ -295,31 +349,30 @@ class _DiscoverMatchScreenState
     );
   }
 
-  Widget _buildScoreRow(
+  Widget _scoreRow(
     String title,
     double value,
     double maximum,
   ) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(
+        bottom: 14,
+      ),
       child: Row(
         children: [
           Expanded(
             child: Text(
               title,
               style: const TextStyle(
-                fontSize: 14,
-                color: Color(0xFF55434C),
+                fontSize: 15,
               ),
             ),
           ),
           Text(
-            '${value.toStringAsFixed(1)} / '
-            '${maximum.toStringAsFixed(0)}',
+            '${value.toStringAsFixed(1)} / ${maximum.toStringAsFixed(0)}',
             style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF2D1B24),
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ],
@@ -330,22 +383,26 @@ class _DiscoverMatchScreenState
   Widget _buildPrivacyCard() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: const Color(0xFFFFF0F5),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: const Color(0xFFF8BBD0),
+          color: Colors.pink.shade100,
         ),
       ),
       child: const Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
         children: [
           Icon(
             Icons.lock_outline,
-            color: Color(0xFFE91E63),
+            color: Colors.pinkAccent,
+            size: 30,
           ),
-          SizedBox(width: 12),
+
+          SizedBox(width: 16),
+
           Expanded(
             child: Text(
               'Your identity stays private. '
@@ -353,9 +410,9 @@ class _DiscoverMatchScreenState
               'are revealed only when both travelers '
               'choose Discover.',
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 15,
+                color: Colors.black54,
                 height: 1.5,
-                color: Color(0xFF6D5963),
               ),
             ),
           ),
@@ -364,34 +421,31 @@ class _DiscoverMatchScreenState
     );
   }
 
-  Widget _buildActionSection() {
-    if (_isMutual) {
-      return _buildMutualCard();
-    }
-
-    if (_hasDiscovered) {
-      return _buildWaitingCard();
-    }
-
+  Widget _buildDiscoverButton() {
     return SizedBox(
       width: double.infinity,
-      height: 56,
       child: ElevatedButton(
-        onPressed: _isDiscovering ? null : _discover,
+        onPressed:
+            _isDiscovering ? null : _discover,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFFE91E63),
+          backgroundColor: Colors.pinkAccent,
           foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
+          padding:
+              const EdgeInsets.symmetric(
+            vertical: 18,
           ),
-          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius:
+                BorderRadius.circular(18),
+          ),
         ),
         child: _isDiscovering
             ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.5,
+                height: 22,
+                width: 22,
+                child:
+                    CircularProgressIndicator(
+                  strokeWidth: 2,
                   color: Colors.white,
                 ),
               )
@@ -407,44 +461,246 @@ class _DiscoverMatchScreenState
     );
   }
 
-  Widget _buildWaitingCard() {
+  Widget _buildWaitingCard({
+    required bool otherUserDiscovered,
+  }) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: const Color(0xFFF8BBD0),
+          color: Colors.pink.shade100,
         ),
       ),
       child: Column(
         children: [
           const Icon(
             Icons.hourglass_top_rounded,
-            size: 42,
-            color: Color(0xFFE91E63),
+            color: Colors.pinkAccent,
+            size: 45,
           ),
-          const SizedBox(height: 12),
+
+          const SizedBox(height: 16),
+
           const Text(
-            'Waiting for the other traveler',
+            'You discovered them!',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 22,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF2D1B24),
             ),
           ),
-          const SizedBox(height: 8),
+
+          const SizedBox(height: 10),
+
+          Text(
+            otherUserDiscovered
+                ? 'They discovered you too!'
+                : 'Waiting for the other traveler to discover you.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 15,
+              color: Colors.black54,
+              height: 1.5,
+            ),
+          ),
+
+          if (!otherUserDiscovered) ...[
+            const SizedBox(height: 18),
+            const CircularProgressIndicator(
+              color: Colors.pinkAccent,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMutualRevealCard() {
+    final profile = _revealedProfile;
+
+    final name =
+        profile?['name'] as String? ?? '';
+
+    final photoUrl =
+        profile?['photoUrl'] as String?;
+
+    final interests =
+        (profile?['interests'] as List?)
+                ?.map((e) => e.toString())
+                .toList() ??
+            [];
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.pink.withOpacity(0.12),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          const Icon(
+            Icons.favorite_rounded,
+            color: Colors.pinkAccent,
+            size: 48,
+          ),
+
+          const SizedBox(height: 12),
+
           const Text(
-            'You chose to discover this connection. '
-            'Your identity will remain private until '
-            'they make the same choice.',
+            'You Crossed Paths! ✨',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 13,
-              height: 1.5,
-              color: Color(0xFF6D5963),
+              fontSize: 27,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          const Text(
+            'You both chose to discover each other.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 15,
+              color: Colors.black54,
+            ),
+          ),
+
+          const SizedBox(height: 26),
+
+          // PROFILE PHOTO
+          if (photoUrl != null &&
+              photoUrl.isNotEmpty)
+            CircleAvatar(
+              radius: 52,
+              backgroundImage:
+                  NetworkImage(photoUrl),
+            )
+          else
+            CircleAvatar(
+              radius: 52,
+              backgroundColor:
+                  Colors.pink.shade50,
+              child: const Icon(
+                Icons.person,
+                size: 55,
+                color: Colors.pinkAccent,
+              ),
+            ),
+
+          const SizedBox(height: 16),
+
+          // NAME
+          Text(
+            name.isEmpty
+                ? 'Traveler'
+                : name,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 25,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+
+          const SizedBox(height: 18),
+
+          // INTERESTS
+          if (interests.isNotEmpty) ...[
+            const Text(
+              'INTERESTS',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.5,
+                color: Colors.black45,
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              alignment:
+                  WrapAlignment.center,
+              children: interests
+                  .map(
+                    (interest) =>
+                        _interestChip(interest),
+                  )
+                  .toList(),
+            ),
+          ],
+
+          const SizedBox(height: 24),
+
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF0F5),
+              borderRadius:
+                  BorderRadius.circular(18),
+            ),
+            child: const Text(
+              'Your identities are now visible to each other. '
+              'You can continue to create a shared journey.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.black54,
+                height: 1.5,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                ScaffoldMessenger.of(context)
+                    .showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Shared Journey is coming next!',
+                    ),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    Colors.pinkAccent,
+                foregroundColor: Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(
+                  vertical: 16,
+                ),
+                shape:
+                    RoundedRectangleBorder(
+                  borderRadius:
+                      BorderRadius.circular(18),
+                ),
+              ),
+              child: const Text(
+                'CREATE SHARED JOURNEY',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+              ),
             ),
           ),
         ],
@@ -452,79 +708,24 @@ class _DiscoverMatchScreenState
     );
   }
 
-  Widget _buildMutualCard() {
+  Widget _interestChip(String interest) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [
-            Color(0xFFFFE4EF),
-            Color(0xFFFFF5F9),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: const Color(0xFFF8BBD0),
-        ),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 13,
+        vertical: 8,
       ),
-      child: Column(
-        children: [
-          const Icon(
-            Icons.favorite_rounded,
-            size: 50,
-            color: Color(0xFFE91E63),
-          ),
-          const SizedBox(height: 14),
-          const Text(
-            'You Crossed Paths!',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF2D1B24),
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'You both chose to discover this connection.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: Color(0xFF6D5963),
-            ),
-          ),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Identity reveal will be added next.',
-                    ),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE91E63),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 0,
-              ),
-              child: const Text(
-                'CONTINUE',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-        ],
+      decoration: BoxDecoration(
+        color: Colors.pink.shade50,
+        borderRadius:
+            BorderRadius.circular(20),
+      ),
+      child: Text(
+        interest,
+        style: const TextStyle(
+          fontSize: 13,
+          color: Colors.pinkAccent,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
