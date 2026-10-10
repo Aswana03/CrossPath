@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
 import 'journey_screen.dart';
 import 'profile_setup_screen.dart';
-import 'firebase_test_screen.dart';
+import 'active_match_test_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -22,6 +23,10 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _checkProfile();
   }
+
+  // ------------------------------------------------------------
+  // CHECK PROFILE
+  // ------------------------------------------------------------
 
   Future<void> _checkProfile() async {
     final user = FirebaseAuth.instance.currentUser;
@@ -78,6 +83,10 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // ------------------------------------------------------------
+  // MAIN BUILD
+  // ------------------------------------------------------------
+
   @override
   Widget build(BuildContext context) {
     if (isCheckingProfile) {
@@ -100,6 +109,10 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // ------------------------------------------------------------
+  // CURRENT PAGE
+  // ------------------------------------------------------------
+
   Widget _buildCurrentPage() {
     switch (currentIndex) {
       case 1:
@@ -113,23 +126,32 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // ------------------------------------------------------------
-  // HOME
-  // ------------------------------------------------------------
+  // ============================================================
+  // HOME PAGE
+  // ============================================================
 
   Widget _buildHomePage() {
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(22, 25, 22, 30),
+      padding: const EdgeInsets.fromLTRB(
+        22,
+        25,
+        22,
+        30,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
+          // ------------------------------------------------------
+          // HEADER
+          // ------------------------------------------------------
+
           Row(
             children: [
               Expanded(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
                   children: [
                     const Text(
                       'GOOD TO SEE YOU',
@@ -140,7 +162,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         color: Color(0xFF9B858E),
                       ),
                     ),
+
                     const SizedBox(height: 6),
+
                     const Text(
                       'Your journey awaits.',
                       style: TextStyle(
@@ -153,7 +177,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
 
-              // Profile circle
+              // Profile icon
               Container(
                 width: 48,
                 height: 48,
@@ -180,7 +204,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
           const SizedBox(height: 28),
 
-          // Main journey card
+          // ------------------------------------------------------
+          // START JOURNEY CARD
+          // ------------------------------------------------------
+
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(24),
@@ -204,14 +231,17 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
               children: [
                 Container(
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.7),
-                    borderRadius: BorderRadius.circular(16),
+                    color:
+                        Colors.white.withValues(alpha: 0.7),
+                    borderRadius:
+                        BorderRadius.circular(16),
                   ),
                   child: const Icon(
                     Icons.navigation_rounded,
@@ -234,7 +264,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 8),
 
                 const Text(
-                  'Start a journey and discover who might cross your path.',
+                  'Start a journey and discover who might '
+                  'cross your path.',
                   style: TextStyle(
                     fontSize: 14,
                     height: 1.5,
@@ -254,15 +285,18 @@ class _HomeScreenState extends State<HomeScreen> {
                       });
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFE85D8E),
+                      backgroundColor:
+                          const Color(0xFFE85D8E),
                       foregroundColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius:
+                            BorderRadius.circular(16),
                       ),
                     ),
                     child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisAlignment:
+                          MainAxisAlignment.center,
                       children: [
                         Icon(
                           Icons.play_arrow_rounded,
@@ -287,6 +321,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
           const SizedBox(height: 30),
 
+          // ------------------------------------------------------
+          // HOW CROSSPATH WORKS
+          // ------------------------------------------------------
+
           const Text(
             'HOW CROSSPATH WORKS',
             style: TextStyle(
@@ -305,21 +343,29 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: _buildInfoCard(
                   icon: Icons.route_rounded,
                   title: 'Travel',
-                  description: 'Share your journey path.',
+                  description:
+                      'Share your journey path.',
                 ),
               ),
+
               const SizedBox(width: 12),
+
               Expanded(
                 child: _buildInfoCard(
                   icon: Icons.favorite_outline_rounded,
                   title: 'Connect',
-                  description: 'Find meaningful crossings.',
+                  description:
+                      'Find meaningful crossings.',
                 ),
               ),
             ],
           ),
 
           const SizedBox(height: 30),
+
+          // ------------------------------------------------------
+          // YOUR JOURNEYS
+          // ------------------------------------------------------
 
           const Text(
             'YOUR JOURNEYS',
@@ -341,7 +387,8 @@ class _HomeScreenState extends State<HomeScreen> {
               borderRadius: BorderRadius.circular(22),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
+                  color:
+                      Colors.black.withValues(alpha: 0.04),
                   blurRadius: 20,
                   offset: const Offset(0, 6),
                 ),
@@ -354,10 +401,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: Color(0xFFE85D8E),
                   size: 28,
                 ),
+
                 SizedBox(width: 15),
+
                 Expanded(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
                     children: [
                       Text(
                         'No journeys yet',
@@ -367,7 +417,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           color: Color(0xFF34262C),
                         ),
                       ),
+
                       SizedBox(height: 5),
+
                       Text(
                         'Your completed journeys will appear here.',
                         style: TextStyle(
@@ -381,254 +433,12 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
-        ],
-      ),
-    );
-  }
 
-  // ------------------------------------------------------------
-  // JOURNEY
-  // ------------------------------------------------------------
+          const SizedBox(height: 18),
 
-  Widget _buildJourneyPage() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(28),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 85,
-              height: 85,
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFE5EF),
-                borderRadius: BorderRadius.circular(28),
-              ),
-              child: const Icon(
-                Icons.route_rounded,
-                color: Color(0xFFE85D8E),
-                size: 42,
-              ),
-            ),
-
-            const SizedBox(height: 25),
-
-            const Text(
-              'Start your journey',
-              style: TextStyle(
-                fontSize: 27,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF34262C),
-              ),
-            ),
-
-            const SizedBox(height: 10),
-
-            const Text(
-              'Choose where you are heading and let CrossPath discover meaningful connections along the way.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                height: 1.5,
-                color: Color(0xFF806B74),
-              ),
-            ),
-
-            const SizedBox(height: 28),
-
-            SizedBox(
-              width: double.infinity,
-              height: 54,
-              child: ElevatedButton(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Destination and GPS tracking will be added next.',
-                      ),
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFE85D8E),
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(17),
-                  ),
-                ),
-                child: const Text(
-                  'CHOOSE DESTINATION',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ------------------------------------------------------------
-  // PROFILE
-  // ------------------------------------------------------------
-
- Widget _buildProfilePage() {
-  final user = FirebaseAuth.instance.currentUser;
-
-  // No logged-in user
-  if (user == null) {
-    return const Center(
-      child: Text(
-        'You are not logged in.',
-        style: TextStyle(
-          color: Color(0xFF806B74),
-        ),
-      ),
-    );
-  }
-
-  return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-    stream: FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid)
-        .snapshots(),
-    builder: (context, snapshot) {
-      // ------------------------------------------------
-      // LOADING
-      // ------------------------------------------------
-
-      if (snapshot.connectionState == ConnectionState.waiting) {
-        return const Center(
-          child: CircularProgressIndicator(
-            color: Color(0xFFE85D8E),
-          ),
-        );
-      }
-
-      // ------------------------------------------------
-      // ERROR
-      // ------------------------------------------------
-
-      if (snapshot.hasError) {
-        return const Center(
-          child: Text(
-            'Could not load your profile.',
-            style: TextStyle(
-              color: Color(0xFF806B74),
-            ),
-          ),
-        );
-      }
-
-      // ------------------------------------------------
-      // PROFILE DOES NOT EXIST
-      // ------------------------------------------------
-
-      if (!snapshot.hasData || !snapshot.data!.exists) {
-        return const Center(
-          child: Text(
-            'Profile not found.',
-            style: TextStyle(
-              color: Color(0xFF806B74),
-            ),
-          ),
-        );
-      }
-
-      // ------------------------------------------------
-      // READ FIRESTORE DATA
-      // ------------------------------------------------
-
-      final data = snapshot.data!.data() ?? {};
-
-      final String name =
-          (data['name'] ?? '').toString().trim();
-
-      final List<dynamic> rawInterests =
-          data['interests'] is List
-              ? data['interests'] as List<dynamic>
-              : [];
-
-      final List<String> interests = rawInterests
-          .map((interest) => interest.toString())
-          .where((interest) => interest.trim().isNotEmpty)
-          .toList();
-
-      final String photoUrl =
-          (data['photoUrl'] ?? '').toString().trim();
-
-      // ------------------------------------------------
-      // PROFILE PAGE
-      // ------------------------------------------------
-
-      return SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(
-          22,
-          30,
-          22,
-          30,
-        ),
-        child: Column(
-          children: [
-            // ------------------------------------------------
-            // TITLE
-            // ------------------------------------------------
-
-            const Text(
-              'You',
-              style: TextStyle(
-                fontSize: 29,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF34262C),
-              ),
-            ),
-
-            const SizedBox(height: 25),
-
-            // ------------------------------------------------
-            // PROFILE PHOTO
-            // ------------------------------------------------
-
-            Container(
-              width: 92,
-              height: 92,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFFFFE5EF),
-                border: Border.all(
-                  color: const Color(0xFFFFC7DD),
-                  width: 2,
-                ),
-              ),
-              child: photoUrl.isNotEmpty
-                  ? ClipOval(
-                      child: Image.network(
-                        photoUrl,
-                        width: 92,
-                        height: 92,
-                        fit: BoxFit.cover,
-                        errorBuilder:
-                            (context, error, stackTrace) {
-                          return const Icon(
-                            Icons.person_outline_rounded,
-                            color: Color(0xFFE85D8E),
-                            size: 45,
-                          );
-                        },
-                      ),
-                    )
-                  : const Icon(
-                      Icons.person_outline_rounded,
-                      color: Color(0xFFE85D8E),
-                      size: 45,
-                    ),
-            ),
-                    const SizedBox(height: 20),
+          // ------------------------------------------------------
+          // TEMPORARY ACTIVE MATCH TEST BUTTON
+          // ------------------------------------------------------
 
           SizedBox(
             width: double.infinity,
@@ -638,16 +448,17 @@ class _HomeScreenState extends State<HomeScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => const FirebaseTestScreen(),
+                    builder: (_) =>
+                        const ActiveMatchTestScreen(),
                   ),
                 );
               },
               icon: const Icon(
-                Icons.cloud_done_outlined,
+                Icons.people_outline_rounded,
                 color: Color(0xFFE85D8E),
               ),
               label: const Text(
-                'TEST FIREBASE DATA',
+                'TEST ACTIVE MATCHING',
                 style: TextStyle(
                   color: Color(0xFFE85D8E),
                   fontWeight: FontWeight.w700,
@@ -659,97 +470,333 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: Color(0xFFFFC7DD),
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius:
+                      BorderRadius.circular(16),
                 ),
               ),
             ),
           ),
 
-            const SizedBox(height: 15),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
 
-            // ------------------------------------------------
-            // USER NAME
-            // ------------------------------------------------
+  // ============================================================
+  // PROFILE PAGE
+  // ============================================================
 
-            Text(
-              name.isNotEmpty
-                  ? name
-                  : 'Your profile',
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF34262C),
+  Widget _buildProfilePage() {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      return const Center(
+        child: Text(
+          'You are not logged in.',
+          style: TextStyle(
+            color: Color(0xFF806B74),
+          ),
+        ),
+      );
+    }
+
+    return StreamBuilder<
+        DocumentSnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .snapshots(),
+      builder: (context, snapshot) {
+        // --------------------------------------------------------
+        // LOADING
+        // --------------------------------------------------------
+
+        if (snapshot.connectionState ==
+            ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(
+              color: Color(0xFFE85D8E),
+            ),
+          );
+        }
+
+        // --------------------------------------------------------
+        // ERROR
+        // --------------------------------------------------------
+
+        if (snapshot.hasError) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(25),
+              child: Text(
+                'Could not load your profile.\n\n'
+                '${snapshot.error}',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Color(0xFF806B74),
+                ),
               ),
             ),
+          );
+        }
 
-            const SizedBox(height: 7),
+        // --------------------------------------------------------
+        // PROFILE NOT FOUND
+        // --------------------------------------------------------
 
-            // ------------------------------------------------
-            // DESCRIPTION
-            // ------------------------------------------------
-
-            Text(
-              name.isNotEmpty
-                  ? 'Your CrossPath profile and interests.'
-                  : 'Add a few details so CrossPath can find better connections.',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 13,
+        if (!snapshot.hasData ||
+            !snapshot.data!.exists) {
+          return const Center(
+            child: Text(
+              'Profile not found.',
+              style: TextStyle(
                 color: Color(0xFF806B74),
               ),
             ),
+          );
+        }
 
-            const SizedBox(height: 30),
+        // --------------------------------------------------------
+        // FIRESTORE DATA
+        // --------------------------------------------------------
 
-            // ------------------------------------------------
-            // PERSONAL DETAILS
-            // ------------------------------------------------
+        final data =
+            snapshot.data!.data() ?? {};
 
-            _buildProfileOption(
-              icon: Icons.person_outline_rounded,
-              title: 'Personal details',
-              subtitle: name.isNotEmpty
-                  ? name
-                  : 'Name and nickname',
-            ),
+        final String name =
+            (data['name'] ?? '').toString().trim();
 
-            const SizedBox(height: 12),
+        final String username =
+            (data['username'] ?? '').toString().trim();
 
-            // ------------------------------------------------
-            // INTERESTS
-            // ------------------------------------------------
+        final String photoUrl =
+            (data['photoUrl'] ?? '').toString().trim();
 
-            _buildProfileOption(
-              icon: Icons.interests_outlined,
-              title: 'Interests',
-              subtitle: interests.isNotEmpty
-                  ? interests.join(' • ')
-                  : 'Choose what you enjoy',
-            ),
+        final interests = <String>[];
 
-            const SizedBox(height: 12),
+        final rawInterests = data['interests'];
 
-            // ------------------------------------------------
-            // PROFILE PHOTO
-            // ------------------------------------------------
+        if (rawInterests is List) {
+          for (final interest in rawInterests) {
+            final value =
+                interest.toString().trim();
 
-            _buildProfileOption(
-              icon: Icons.photo_camera_outlined,
-              title: 'Profile photo',
-              subtitle: photoUrl.isNotEmpty
-                  ? 'Added'
-                  : 'Optional',
-            ),
-          ],
-        ),
-      );
-    },
-  );
-}
+            if (value.isNotEmpty) {
+              interests.add(value);
+            }
+          }
+        }
 
-  // ------------------------------------------------------------
-  // SMALL COMPONENTS
-  // ------------------------------------------------------------
+        // --------------------------------------------------------
+        // PROFILE UI
+        // --------------------------------------------------------
+
+        return SingleChildScrollView(
+          physics:
+              const BouncingScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(
+            22,
+            30,
+            22,
+            35,
+          ),
+          child: Column(
+            children: [
+              const Text(
+                'You',
+                style: TextStyle(
+                  fontSize: 29,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF34262C),
+                ),
+              ),
+
+              const SizedBox(height: 25),
+
+              // --------------------------------------------------
+              // PROFILE PHOTO
+              // --------------------------------------------------
+
+              Container(
+                width: 92,
+                height: 92,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFFFFE5EF),
+                  border: Border.all(
+                    color:
+                        const Color(0xFFFFC7DD),
+                    width: 2,
+                  ),
+                ),
+                child: photoUrl.isNotEmpty
+                    ? ClipOval(
+                        child: Image.network(
+                          photoUrl,
+                          width: 92,
+                          height: 92,
+                          fit: BoxFit.cover,
+                          errorBuilder:
+                              (
+                            context,
+                            error,
+                            stackTrace,
+                          ) {
+                            return const Icon(
+                              Icons
+                                  .person_outline_rounded,
+                              color:
+                                  Color(0xFFE85D8E),
+                              size: 45,
+                            );
+                          },
+                        ),
+                      )
+                    : const Icon(
+                        Icons.person_outline_rounded,
+                        color: Color(0xFFE85D8E),
+                        size: 45,
+                      ),
+              ),
+
+              const SizedBox(height: 18),
+
+              // --------------------------------------------------
+              // NAME
+              // --------------------------------------------------
+
+              Text(
+                name.isNotEmpty
+                    ? name
+                    : 'Your profile',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF34262C),
+                ),
+              ),
+
+              const SizedBox(height: 6),
+
+              // --------------------------------------------------
+              // USERNAME
+              // --------------------------------------------------
+
+              Text(
+                username.isNotEmpty
+                    ? '@$username'
+                    : 'CrossPath traveller',
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF9B858E),
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              const Text(
+                'Your CrossPath profile and interests.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF806B74),
+                ),
+              ),
+
+              const SizedBox(height: 30),
+
+              // --------------------------------------------------
+              // PERSONAL DETAILS
+              // --------------------------------------------------
+
+              _buildProfileOption(
+                icon:
+                    Icons.person_outline_rounded,
+                title: 'Personal details',
+                subtitle: name.isNotEmpty
+                    ? name
+                    : 'Name not added',
+              ),
+
+              const SizedBox(height: 12),
+
+              // --------------------------------------------------
+              // INTERESTS
+              // --------------------------------------------------
+
+              _buildProfileOption(
+                icon: Icons.interests_outlined,
+                title: 'Interests',
+                subtitle: interests.isNotEmpty
+                    ? interests.join(' • ')
+                    : 'No interests added',
+              ),
+
+              const SizedBox(height: 12),
+
+              // --------------------------------------------------
+              // PROFILE PHOTO STATUS
+              // --------------------------------------------------
+
+              _buildProfileOption(
+                icon:
+                    Icons.photo_camera_outlined,
+                title: 'Profile photo',
+                subtitle: photoUrl.isNotEmpty
+                    ? 'Added'
+                    : 'Optional',
+              ),
+
+              const SizedBox(height: 20),
+
+              // --------------------------------------------------
+              // PRIVACY MESSAGE
+              // --------------------------------------------------
+
+              Container(
+                width: double.infinity,
+                padding:
+                    const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF1F6),
+                  borderRadius:
+                      BorderRadius.circular(18),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(
+                      Icons
+                          .verified_user_outlined,
+                      color: Color(0xFFE85D8E),
+                    ),
+
+                    SizedBox(width: 12),
+
+                    Expanded(
+                      child: Text(
+                        'Your profile information is '
+                        'stored securely in Firebase.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          height: 1.4,
+                          color: Color(0xFF806B74),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // ============================================================
+  // INFO CARD
+  // ============================================================
 
   Widget _buildInfoCard({
     required IconData icon,
@@ -764,14 +811,16 @@ class _HomeScreenState extends State<HomeScreen> {
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.035),
+            color:
+                Colors.black.withValues(alpha: 0.035),
             blurRadius: 18,
             offset: const Offset(0, 6),
           ),
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
         children: [
           Icon(
             icon,
@@ -805,12 +854,17 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // ============================================================
+  // PROFILE OPTION
+  // ============================================================
+
   Widget _buildProfileOption({
     required IconData icon,
     required String title,
     required String subtitle,
   }) {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.symmetric(
         horizontal: 18,
         vertical: 17,
@@ -820,7 +874,8 @@ class _HomeScreenState extends State<HomeScreen> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.035),
+            color:
+                Colors.black.withValues(alpha: 0.035),
             blurRadius: 18,
             offset: const Offset(0, 6),
           ),
@@ -833,7 +888,8 @@ class _HomeScreenState extends State<HomeScreen> {
             height: 45,
             decoration: BoxDecoration(
               color: const Color(0xFFFFE5EF),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius:
+                  BorderRadius.circular(14),
             ),
             child: Icon(
               icon,
@@ -846,7 +902,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
@@ -880,13 +937,18 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // ============================================================
+  // BOTTOM NAVIGATION
+  // ============================================================
+
   Widget _buildBottomNavigationBar() {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color:
+                Colors.black.withValues(alpha: 0.05),
             blurRadius: 20,
             offset: const Offset(0, -5),
           ),
@@ -905,17 +967,23 @@ class _HomeScreenState extends State<HomeScreen> {
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home_rounded),
+            selectedIcon:
+                Icon(Icons.home_rounded),
             label: 'Home',
           ),
+
           NavigationDestination(
             icon: Icon(Icons.route_outlined),
-            selectedIcon: Icon(Icons.route_rounded),
+            selectedIcon:
+                Icon(Icons.route_rounded),
             label: 'Journey',
           ),
+
           NavigationDestination(
-            icon: Icon(Icons.person_outline_rounded),
-            selectedIcon: Icon(Icons.person_rounded),
+            icon:
+                Icon(Icons.person_outline_rounded),
+            selectedIcon:
+                Icon(Icons.person_rounded),
             label: 'You',
           ),
         ],

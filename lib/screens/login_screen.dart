@@ -70,6 +70,7 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
+    // Login successful
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Login successful!'),
@@ -77,6 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
 
+    // Go to Home screen
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -253,7 +255,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => const RegisterScreen(),
+                                  builder: (_) =>
+                                      const RegisterScreen(),
                                 ),
                               );
                             },
