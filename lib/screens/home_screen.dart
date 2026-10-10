@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'journey_screen.dart';
 import 'profile_setup_screen.dart';
+import 'firebase_test_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -475,89 +476,276 @@ class _HomeScreenState extends State<HomeScreen> {
   // PROFILE
   // ------------------------------------------------------------
 
-  Widget _buildProfilePage() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(22, 30, 22, 30),
-      child: Column(
-        children: [
-          const Text(
-            'You',
-            style: TextStyle(
-              fontSize: 29,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF34262C),
-            ),
-          ),
+ Widget _buildProfilePage() {
+  final user = FirebaseAuth.instance.currentUser;
 
-          const SizedBox(height: 25),
-
-          Container(
-            width: 92,
-            height: 92,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: const Color(0xFFFFE5EF),
-              border: Border.all(
-                color: const Color(0xFFFFC7DD),
-                width: 2,
-              ),
-            ),
-            child: const Icon(
-              Icons.person_outline_rounded,
-              color: Color(0xFFE85D8E),
-              size: 45,
-            ),
-          ),
-
-          const SizedBox(height: 15),
-
-          const Text(
-            'Your profile',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF34262C),
-            ),
-          ),
-
-          const SizedBox(height: 7),
-
-          const Text(
-            'Your CrossPath profile and interests.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 13,
-              color: Color(0xFF806B74),
-            ),
-          ),
-
-          const SizedBox(height: 30),
-
-          _buildProfileOption(
-            icon: Icons.person_outline_rounded,
-            title: 'Personal details',
-            subtitle: 'Name and nickname',
-          ),
-
-          const SizedBox(height: 12),
-
-          _buildProfileOption(
-            icon: Icons.interests_outlined,
-            title: 'Interests',
-            subtitle: 'Choose what you enjoy',
-          ),
-
-          const SizedBox(height: 12),
-
-          _buildProfileOption(
-            icon: Icons.photo_camera_outlined,
-            title: 'Profile photo',
-            subtitle: 'Optional',
-          ),
-        ],
+  // No logged-in user
+  if (user == null) {
+    return const Center(
+      child: Text(
+        'You are not logged in.',
+        style: TextStyle(
+          color: Color(0xFF806B74),
+        ),
       ),
     );
   }
+
+  return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+    stream: FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .snapshots(),
+    builder: (context, snapshot) {
+      // ------------------------------------------------
+      // LOADING
+      // ------------------------------------------------
+
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return const Center(
+          child: CircularProgressIndicator(
+            color: Color(0xFFE85D8E),
+          ),
+        );
+      }
+
+      // ------------------------------------------------
+      // ERROR
+      // ------------------------------------------------
+
+      if (snapshot.hasError) {
+        return const Center(
+          child: Text(
+            'Could not load your profile.',
+            style: TextStyle(
+              color: Color(0xFF806B74),
+            ),
+          ),
+        );
+      }
+
+      // ------------------------------------------------
+      // PROFILE DOES NOT EXIST
+      // ------------------------------------------------
+
+      if (!snapshot.hasData || !snapshot.data!.exists) {
+        return const Center(
+          child: Text(
+            'Profile not found.',
+            style: TextStyle(
+              color: Color(0xFF806B74),
+            ),
+          ),
+        );
+      }
+
+      // ------------------------------------------------
+      // READ FIRESTORE DATA
+      // ------------------------------------------------
+
+      final data = snapshot.data!.data() ?? {};
+
+      final String name =
+          (data['name'] ?? '').toString().trim();
+
+      final List<dynamic> rawInterests =
+          data['interests'] is List
+              ? data['interests'] as List<dynamic>
+              : [];
+
+      final List<String> interests = rawInterests
+          .map((interest) => interest.toString())
+          .where((interest) => interest.trim().isNotEmpty)
+          .toList();
+
+      final String photoUrl =
+          (data['photoUrl'] ?? '').toString().trim();
+
+      // ------------------------------------------------
+      // PROFILE PAGE
+      // ------------------------------------------------
+
+      return SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(
+          22,
+          30,
+          22,
+          30,
+        ),
+        child: Column(
+          children: [
+            // ------------------------------------------------
+            // TITLE
+            // ------------------------------------------------
+
+            const Text(
+              'You',
+              style: TextStyle(
+                fontSize: 29,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF34262C),
+              ),
+            ),
+
+            const SizedBox(height: 25),
+
+            // ------------------------------------------------
+            // PROFILE PHOTO
+            // ------------------------------------------------
+
+            Container(
+              width: 92,
+              height: 92,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFFFFE5EF),
+                border: Border.all(
+                  color: const Color(0xFFFFC7DD),
+                  width: 2,
+                ),
+              ),
+              child: photoUrl.isNotEmpty
+                  ? ClipOval(
+                      child: Image.network(
+                        photoUrl,
+                        width: 92,
+                        height: 92,
+                        fit: BoxFit.cover,
+                        errorBuilder:
+                            (context, error, stackTrace) {
+                          return const Icon(
+                            Icons.person_outline_rounded,
+                            color: Color(0xFFE85D8E),
+                            size: 45,
+                          );
+                        },
+                      ),
+                    )
+                  : const Icon(
+                      Icons.person_outline_rounded,
+                      color: Color(0xFFE85D8E),
+                      size: 45,
+                    ),
+            ),
+                    const SizedBox(height: 20),
+
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const FirebaseTestScreen(),
+                  ),
+                );
+              },
+              icon: const Icon(
+                Icons.cloud_done_outlined,
+                color: Color(0xFFE85D8E),
+              ),
+              label: const Text(
+                'TEST FIREBASE DATA',
+                style: TextStyle(
+                  color: Color(0xFFE85D8E),
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(
+                  color: Color(0xFFFFC7DD),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+            ),
+          ),
+
+            const SizedBox(height: 15),
+
+            // ------------------------------------------------
+            // USER NAME
+            // ------------------------------------------------
+
+            Text(
+              name.isNotEmpty
+                  ? name
+                  : 'Your profile',
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF34262C),
+              ),
+            ),
+
+            const SizedBox(height: 7),
+
+            // ------------------------------------------------
+            // DESCRIPTION
+            // ------------------------------------------------
+
+            Text(
+              name.isNotEmpty
+                  ? 'Your CrossPath profile and interests.'
+                  : 'Add a few details so CrossPath can find better connections.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 13,
+                color: Color(0xFF806B74),
+              ),
+            ),
+
+            const SizedBox(height: 30),
+
+            // ------------------------------------------------
+            // PERSONAL DETAILS
+            // ------------------------------------------------
+
+            _buildProfileOption(
+              icon: Icons.person_outline_rounded,
+              title: 'Personal details',
+              subtitle: name.isNotEmpty
+                  ? name
+                  : 'Name and nickname',
+            ),
+
+            const SizedBox(height: 12),
+
+            // ------------------------------------------------
+            // INTERESTS
+            // ------------------------------------------------
+
+            _buildProfileOption(
+              icon: Icons.interests_outlined,
+              title: 'Interests',
+              subtitle: interests.isNotEmpty
+                  ? interests.join(' • ')
+                  : 'Choose what you enjoy',
+            ),
+
+            const SizedBox(height: 12),
+
+            // ------------------------------------------------
+            // PROFILE PHOTO
+            // ------------------------------------------------
+
+            _buildProfileOption(
+              icon: Icons.photo_camera_outlined,
+              title: 'Profile photo',
+              subtitle: photoUrl.isNotEmpty
+                  ? 'Added'
+                  : 'Optional',
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
 
   // ------------------------------------------------------------
   // SMALL COMPONENTS
