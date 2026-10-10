@@ -399,7 +399,7 @@ Technology, Music, Nature, Food, Coding
 
 This confirms that the Firebase journey data can be converted into the internal `JourneyData` model used by the matching engine.
 
-![Firebase Journey Data](docs/screenshots/firebase_test.jpeg)
+<img src="docs/screenshots/firebase_test.jpeg" width="250">
 
 ---
 
@@ -485,7 +485,7 @@ and the travellers are not considered a match.
 
 ## 🌸 Splash Screen
 
-![CrossPath Splash Screen](docs/screenshots/splash_screen.jpeg)
+<img src="docs/screenshots/splash_screen.jpeg" width="250">
 
 The CrossPath splash screen introduces the core idea:
 
@@ -501,7 +501,7 @@ Users can configure their name and interests before becoming discoverable.
 
 ## Home
 
-![CrossPath Home](docs/screenshots/home_screen.jpeg)
+<img src="docs/screenshots/home_screen.jpeg" width="250">
 
 The Home screen provides access to:
 
@@ -514,7 +514,7 @@ The Home screen provides access to:
 
 ## Journey Tracking
 
-![CrossPath Journey](docs/screenshots/journey_screen.jpeg)
+<img src="docs/screenshots/journey_screen.jpeg" width="250">
 
 The Journey screen handles:
 
@@ -530,7 +530,7 @@ The Journey screen handles:
 
 ## Profile
 
-![CrossPath Profile](docs/screenshots/profile_screen.jpeg)
+<img src="docs/screenshots/profile_screen.jpeg" width="250">
 
 The profile page displays the user's Firebase-backed:
 
