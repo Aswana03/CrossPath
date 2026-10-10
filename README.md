@@ -491,14 +491,6 @@ The CrossPath splash screen introduces the core idea:
 
 > Your journey might cross someone else's.
 
-## Profile Setup
-
-![CrossPath Profile Setup](docs/images/profile-setup.png)
-
-Users can configure their name and interests before becoming discoverable.
-
----
-
 ## Home
 
 <img src="docs/screenshots/home_screen.jpeg" width="250">
