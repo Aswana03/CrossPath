@@ -96,7 +96,7 @@ A score of:
 
 # 🧠 Matching Engine
 
-![CrossPath Matching Engine](docs/images/crosspath-matching-engine.jpeg)
+![CrossPath Matching Engine](docs/screenshots/matching-engine.jpeg)
 
 The CrossPath matching engine compares two travellers using multiple independent parameters.
 
@@ -399,9 +399,7 @@ Technology, Music, Nature, Food, Coding
 
 This confirms that the Firebase journey data can be converted into the internal `JourneyData` model used by the matching engine.
 
-![Firebase Journey Data](docs/images/firebase-journey-data.png)
-
-![Firebase Test Success](docs/images/firebase-test-success.png)
+![Firebase Journey Data](docs/screenshots/firebase_test.jpeg)
 
 ---
 
@@ -485,13 +483,13 @@ and the travellers are not considered a match.
 
 ## Welcome / Authentication
 
-![CrossPath Welcome Screen](docs/images/welcome-screen.png)
+## 🌸 Splash Screen
 
-![CrossPath Login Screen](docs/images/login-screen.png)
+![CrossPath Splash Screen](docs/screenshots/splash_screen.jpeg)
 
-![CrossPath Register Screen](docs/images/register-screen.png)
+The CrossPath splash screen introduces the core idea:
 
----
+> Your journey might cross someone else's.
 
 ## Profile Setup
 
@@ -503,7 +501,7 @@ Users can configure their name and interests before becoming discoverable.
 
 ## Home
 
-![CrossPath Home](docs/images/home-screen.png)
+![CrossPath Home](docs/screenshots/home_screen.jpeg)
 
 The Home screen provides access to:
 
@@ -516,7 +514,7 @@ The Home screen provides access to:
 
 ## Journey Tracking
 
-![CrossPath Journey](docs/images/journey-screen.png)
+![CrossPath Journey](docs/screenshots/journey_screen.jpeg)
 
 The Journey screen handles:
 
@@ -532,7 +530,7 @@ The Journey screen handles:
 
 ## Profile
 
-![CrossPath Profile](docs/images/profile-screen.png)
+![CrossPath Profile](docs/screenshots/profile_screen.jpeg)
 
 The profile page displays the user's Firebase-backed:
 
