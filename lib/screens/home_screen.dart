@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'journey_screen.dart';
+import 'profile_setup_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -10,8 +14,82 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int currentIndex = 0;
 
+  bool isCheckingProfile = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkProfile();
+  }
+
+  Future<void> _checkProfile() async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      if (mounted) {
+        setState(() {
+          isCheckingProfile = false;
+        });
+      }
+      return;
+    }
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      if (!mounted) return;
+
+      final data = doc.data();
+
+      setState(() {
+        isCheckingProfile = false;
+      });
+
+      if (data == null || data['profileComplete'] != true) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const ProfileSetupScreen(),
+            ),
+          );
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        isCheckingProfile = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Could not check your profile. Please try again.',
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (isCheckingProfile) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFFFF8FB),
+        body: Center(
+          child: CircularProgressIndicator(
+            color: Color(0xFFE85D8E),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFFFF8FB),
       body: SafeArea(
@@ -24,9 +102,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildCurrentPage() {
     switch (currentIndex) {
       case 1:
-        return _buildJourneyPage();
+        return const JourneyScreen();
+
       case 2:
         return _buildProfilePage();
+
       default:
         return _buildHomePage();
     }
@@ -81,7 +161,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: Colors.white,
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFE85D8E).withValues(alpha: 0.12),
+                      color: const Color(0xFFE85D8E)
+                          .withValues(alpha: 0.12),
                       blurRadius: 15,
                       offset: const Offset(0, 5),
                     ),
@@ -114,7 +195,8 @@ class _HomeScreenState extends State<HomeScreen> {
               borderRadius: BorderRadius.circular(28),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFE85D8E).withValues(alpha: 0.14),
+                  color: const Color(0xFFE85D8E)
+                      .withValues(alpha: 0.14),
                   blurRadius: 25,
                   offset: const Offset(0, 10),
                 ),
@@ -430,7 +512,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 15),
 
           const Text(
-            'Complete your profile',
+            'Your profile',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w700,
@@ -441,7 +523,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 7),
 
           const Text(
-            'Add a few details so CrossPath can find better connections.',
+            'Your CrossPath profile and interests.',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13,
@@ -508,7 +590,9 @@ class _HomeScreenState extends State<HomeScreen> {
             color: const Color(0xFFE85D8E),
             size: 27,
           ),
+
           const Spacer(),
+
           Text(
             title,
             style: const TextStyle(
@@ -517,7 +601,9 @@ class _HomeScreenState extends State<HomeScreen> {
               color: Color(0xFF34262C),
             ),
           ),
+
           const SizedBox(height: 4),
+
           Text(
             description,
             style: const TextStyle(
@@ -582,7 +668,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: Color(0xFF34262C),
                   ),
                 ),
+
                 const SizedBox(height: 4),
+
                 Text(
                   subtitle,
                   style: const TextStyle(
