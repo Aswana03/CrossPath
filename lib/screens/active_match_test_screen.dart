@@ -1,8 +1,9 @@
+import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 
 import '../services/active_match_service.dart';
+import 'discover_match_screen.dart';
 
 class ActiveMatchTestScreen extends StatefulWidget {
   const ActiveMatchTestScreen({super.key});
@@ -17,39 +18,39 @@ class _ActiveMatchTestScreenState
   final FirebaseFirestore _firestore =
       FirebaseFirestore.instance;
 
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseAuth _auth =
+      FirebaseAuth.instance;
 
-  bool _isLoading = false;
-
+  bool _isLoading = true;
   String? _errorMessage;
 
   List<ActiveMatch> _matches = [];
 
+  @override
+  void initState() {
+    super.initState();
+    _findMatches();
+  }
+
   Future<void> _findMatches() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-      _matches = [];
-    });
-
     try {
-      final user = _auth.currentUser;
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
 
-      if (user == null) {
-        throw Exception(
-          'No user is currently logged in.',
-        );
+      final currentUser = _auth.currentUser;
+
+      if (currentUser == null) {
+        throw Exception('User is not logged in.');
       }
 
       // Find the current user's active journey.
       final journeySnapshot = await _firestore
           .collection('users')
-          .doc(user.uid)
+          .doc(currentUser.uid)
           .collection('journeys')
-          .where(
-            'status',
-            isEqualTo: 'active',
-          )
+          .where('status', isEqualTo: 'active')
           .limit(1)
           .get();
 
@@ -62,7 +63,6 @@ class _ActiveMatchTestScreenState
       final myJourneyId =
           journeySnapshot.docs.first.id;
 
-      // Find other users with active journeys.
       final matches =
           await ActiveMatchService().findActiveMatches(
         myJourneyId: myJourneyId,
@@ -78,425 +78,358 @@ class _ActiveMatchTestScreenState
       if (!mounted) return;
 
       setState(() {
-        _errorMessage = e.toString();
         _isLoading = false;
+        _errorMessage = e.toString();
       });
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final user = _auth.currentUser;
-
-    return Scaffold(
-      backgroundColor: const Color(0xFFFFF8FB),
-
-      appBar: AppBar(
-        title: const Text('Active Match Test'),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF34262C),
-        elevation: 0,
-      ),
-
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'ACTIVE MATCH TEST',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF34262C),
-                ),
-              ),
-
-              const SizedBox(height: 10),
-
-              const Text(
-                'Find users currently travelling on journeys '
-                'that may match your path.',
-                style: TextStyle(
-                  fontSize: 14,
-                  height: 1.5,
-                  color: Color(0xFF806B74),
-                ),
-              ),
-
-              const SizedBox(height: 18),
-
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(15),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius:
-                      BorderRadius.circular(16),
-                ),
-                child: Text(
-                  'Logged-in user:\n'
-                  '${user?.uid ?? "Not logged in"}',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Color(0xFF806B74),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 18),
-
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed:
-                      _isLoading ? null : _findMatches,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        const Color(0xFFE85D8E),
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child:
-                              CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Text(
-                          'FIND ACTIVE MATCHES',
-                          style: TextStyle(
-                            fontWeight:
-                                FontWeight.w700,
-                            letterSpacing: 0.8,
-                          ),
-                        ),
-                ),
-              ),
-
-              const SizedBox(height: 22),
-
-              if (_errorMessage != null)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.red.shade50,
-                    borderRadius:
-                        BorderRadius.circular(16),
-                  ),
-                  child: Text(
-                    _errorMessage!,
-                    style: TextStyle(
-                      color: Colors.red.shade700,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-
-              if (_errorMessage == null &&
-                  !_isLoading)
-                Text(
-                  'Matches found: ${_matches.length}',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF34262C),
-                  ),
-                ),
-
-              const SizedBox(height: 12),
-
-              Expanded(
-                child: _matches.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'No active matches yet.',
-                          style: TextStyle(
-                            color: Color(0xFF9B858E),
-                          ),
-                        ),
-                      )
-                    : ListView.builder(
-                        itemCount: _matches.length,
-                        itemBuilder:
-                            (context, index) {
-                          final match =
-                              _matches[index];
-
-                          final score =
-                              match.score;
-
-                          return Container(
-                            margin:
-                                const EdgeInsets.only(
-                              bottom: 14,
-                            ),
-                            padding:
-                                const EdgeInsets.all(18),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius:
-                                  BorderRadius.circular(
-                                20,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black
-                                      .withValues(
-                                    alpha: 0.04,
-                                  ),
-                                  blurRadius: 15,
-                                  offset:
-                                      const Offset(
-                                    0,
-                                    5,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment
-                                      .start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 45,
-                                      height: 45,
-                                      decoration:
-                                          BoxDecoration(
-                                        color:
-                                            const Color(
-                                          0xFFFFE5EF,
-                                        ),
-                                        borderRadius:
-                                            BorderRadius
-                                                .circular(
-                                          14,
-                                        ),
-                                      ),
-                                      child: const Icon(
-                                        Icons
-                                            .person_outline_rounded,
-                                        color: Color(
-                                          0xFFE85D8E,
-                                        ),
-                                      ),
-                                    ),
-
-                                    const SizedBox(
-                                      width: 12,
-                                    ),
-
-                                    const Expanded(
-                                      child: Text(
-                                        'Potential Match',
-                                        style: TextStyle(
-                                          fontSize: 17,
-                                          fontWeight:
-                                              FontWeight
-                                                  .bold,
-                                          color: Color(
-                                            0xFF34262C,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-
-                                const SizedBox(
-                                  height: 12,
-                                ),
-
-                                Text(
-                                  'User ID: ${match.userId}',
-                                  style:
-                                      const TextStyle(
-                                    fontSize: 10,
-                                    color: Color(
-                                      0xFF9B858E,
-                                    ),
-                                  ),
-                                ),
-
-                                const SizedBox(
-                                  height: 14,
-                                ),
-
-                                Container(
-                                  width:
-                                      double.infinity,
-                                  padding:
-                                      const EdgeInsets
-                                          .all(14),
-                                  decoration:
-                                      BoxDecoration(
-                                    color:
-                                        const Color(
-                                      0xFFFFF8FB,
-                                    ),
-                                    borderRadius:
-                                        BorderRadius
-                                            .circular(
-                                      14,
-                                    ),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment
-                                            .start,
-                                    children: [
-                                      const Text(
-                                        'MATCH SCORE',
-                                        style:
-                                            TextStyle(
-                                          fontSize: 10,
-                                          fontWeight:
-                                              FontWeight
-                                                  .w700,
-                                          letterSpacing:
-                                              1,
-                                          color: Color(
-                                            0xFF9B858E,
-                                          ),
-                                        ),
-                                      ),
-
-                                      const SizedBox(
-                                        height: 5,
-                                      ),
-
-                                      Text(
-                                        '${score.totalScore.toStringAsFixed(2)} / 100',
-                                        style:
-                                            const TextStyle(
-                                          fontSize: 24,
-                                          fontWeight:
-                                              FontWeight
-                                                  .bold,
-                                          color: Color(
-                                            0xFFE85D8E,
-                                          ),
-                                        ),
-                                      ),
-
-                                      const SizedBox(
-                                        height: 5,
-                                      ),
-
-                                      Text(
-                                        score.isMatch
-                                            ? 'MATCH ≥ 70'
-                                            : 'NOT A MATCH < 70',
-                                        style:
-                                            TextStyle(
-                                          fontSize: 12,
-                                          fontWeight:
-                                              FontWeight
-                                                  .bold,
-                                          color: score
-                                                  .isMatch
-                                              ? Colors
-                                                  .green
-                                              : Colors
-                                                  .red,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-
-                                const SizedBox(
-                                  height: 15,
-                                ),
-
-                                _buildScoreRow(
-                                  'Route overlap',
-                                  score.routeScore,
-                                  35,
-                                ),
-
-                                _buildScoreRow(
-                                  'Destination',
-                                  score.destinationScore,
-                                  25,
-                                ),
-
-                                _buildScoreRow(
-                                  'Repeated crossings',
-                                  score.crossingScore,
-                                  15,
-                                ),
-
-                                _buildScoreRow(
-                                  'Interests',
-                                  score.interestScore,
-                                  15,
-                                ),
-
-                                _buildScoreRow(
-                                  'Direction',
-                                  score.directionScore,
-                                  5,
-                                ),
-
-                                _buildScoreRow(
-                                  'Time overlap',
-                                  score.timeScore,
-                                  5,
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-              ),
-            ],
-          ),
+  void _openDiscoverScreen(ActiveMatch match) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DiscoverMatchScreen(
+          match: match,
         ),
       ),
     );
   }
 
-  Widget _buildScoreRow(
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFFFF7FA),
+      appBar: AppBar(
+        title: const Text(
+          'CrossPath Matches',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.error_outline,
+                size: 50,
+                color: Colors.redAccent,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                _errorMessage!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _findMatches,
+                child: const Text('TRY AGAIN'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_matches.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: _findMatches,
+        child: ListView(
+          children: const [
+            SizedBox(height: 180),
+            Icon(
+              Icons.explore_outlined,
+              size: 70,
+              color: Colors.pinkAccent,
+            ),
+            SizedBox(height: 20),
+            Center(
+              child: Text(
+                'No CrossPath matches yet.',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            SizedBox(height: 8),
+            Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 35,
+                ),
+                child: Text(
+                  'Keep your journey active. '
+                  'We will look for people whose '
+                  'paths meaningfully cross yours.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Colors.black54,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _findMatches,
+      child: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          const Text(
+            'Someone crossed your path ✨',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          const Text(
+            'We found people whose journeys '
+            'meaningfully overlap with yours.',
+            style: TextStyle(
+              fontSize: 15,
+              color: Colors.black54,
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          ..._matches.map(
+            (match) => _buildMatchCard(match),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMatchCard(ActiveMatch match) {
+    final score = match.score.totalScore;
+
+    return GestureDetector(
+      onTap: () => _openDiscoverScreen(match),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 18),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.pink.withOpacity(0.08),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment:
+              CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 58,
+                  height: 58,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.pink.shade50,
+                  ),
+                  child: const Icon(
+                    Icons.person_outline,
+                    color: Colors.pinkAccent,
+                    size: 30,
+                  ),
+                ),
+
+                const SizedBox(width: 14),
+
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Someone crossed your path',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Identity hidden until mutual Discover',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const Icon(
+                  Icons.arrow_forward_ios,
+                  size: 18,
+                  color: Colors.black38,
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 20),
+
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.pink.shade50,
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    score.toStringAsFixed(1),
+                    style: const TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.pinkAccent,
+                    ),
+                  ),
+                  const Text(
+                    'MATCH SCORE / 100',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1,
+                      color: Colors.black54,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 18),
+
+            _scoreRow(
+              'Route overlap',
+              match.score.routeScore,
+              35,
+            ),
+
+            _scoreRow(
+              'Destination',
+              match.score.destinationScore,
+              25,
+            ),
+
+            _scoreRow(
+              'Repeated crossings',
+              match.score.crossingScore,
+              15,
+            ),
+
+            _scoreRow(
+              'Shared interests',
+              match.score.interestScore,
+              15,
+            ),
+
+            _scoreRow(
+              'Direction',
+              match.score.directionScore,
+              5,
+            ),
+
+            _scoreRow(
+              'Time overlap',
+              match.score.timeScore,
+              5,
+            ),
+
+            const SizedBox(height: 16),
+
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () =>
+                    _openDiscoverScreen(match),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      Colors.pinkAccent,
+                  foregroundColor: Colors.white,
+                  padding:
+                      const EdgeInsets.symmetric(
+                    vertical: 15,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius:
+                        BorderRadius.circular(16),
+                  ),
+                ),
+                child: const Text(
+                  'VIEW CROSSPATH',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _scoreRow(
     String title,
-    double score,
+    double value,
     double maximum,
   ) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 7),
+      padding:
+          const EdgeInsets.only(bottom: 10),
       child: Row(
         children: [
           Expanded(
             child: Text(
               title,
               style: const TextStyle(
-                fontSize: 12,
-                color: Color(0xFF806B74),
+                fontSize: 13,
               ),
             ),
           ),
-
           Text(
-            '${score.toStringAsFixed(1)} / ${maximum.toStringAsFixed(0)}',
+            '${value.toStringAsFixed(1)} / ${maximum.toStringAsFixed(0)}',
             style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF34262C),
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
