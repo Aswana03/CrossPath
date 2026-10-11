@@ -481,56 +481,119 @@ and the travellers are not considered a match.
 
 # 📱 Application Screens
 
-## Welcome / Authentication
+CrossPath includes a complete journey-to-connection flow, from authentication and GPS tracking to mutual discovery, real-world meetup verification and memory creation.
+
+---
 
 ## 🌸 Splash Screen
 
 <img src="docs/screenshots/splash_screen.jpeg" width="250">
 
-The CrossPath splash screen introduces the core idea:
+The splash screen introduces the CrossPath concept:
 
 > Your journey might cross someone else's.
 
-## Home
+---
+
+## 🏠 Home Screen
 
 <img src="docs/screenshots/home_screen.jpeg" width="250">
 
 The Home screen provides access to:
 
-- Journey tracking
-- CrossPath information
-- User profile
+- Start a new journey
 - Journey status
+- CrossPath matching
+- Profile
+- Memory Card
+- Previous journey information
 
 ---
 
-## Journey Tracking
+## 📍 Journey Tracking
 
 <img src="docs/screenshots/journey_screen.jpeg" width="250">
 
-The Journey screen handles:
+The Journey screen provides real-time journey tracking using GPS.
+
+Features include:
 
 - Destination selection
-- GPS permission
-- Live location
+- GPS permission handling
+- Live location tracking
 - Journey timer
 - GPS point collection
-- Destination detection
+- Destination coordinate detection
+- Automatic destination arrival detection
 - Journey completion
+- Firestore journey storage
 
 ---
 
-## Profile
+## 👤 Profile
 
 <img src="docs/screenshots/profile_screen.jpeg" width="250">
 
-The profile page displays the user's Firebase-backed:
+The profile screen allows users to manage:
 
 - Name
 - Interests
-- Profile photo status
+- Discoverability
+- Profile information
+
+User data is stored using Firebase Firestore.
 
 ---
+
+## 💗 Mutual Discovery
+
+<img src="docs/screenshots/discover.jpeg" width="250">
+
+When CrossPath identifies a potential connection, the user receives an anonymous discovery.
+
+The identity of the other traveller remains hidden initially.
+
+Only when **both travellers independently choose Discover** does CrossPath reveal the connection.
+
+The revealed profile includes:
+
+- Traveller name
+- Shared interests
+- Connection information
+- Option to create a Shared Journey
+
+---
+
+## 🤝 Real-World Meetup Verification
+
+<img src="docs/screenshots/meetup_success.jpeg" width="250">
+
+After both travellers agree to create a Shared Journey, CrossPath suggests a public meeting location.
+
+The application then performs real-time GPS verification.
+
+The meetup is considered successful when the two travellers' current GPS coordinates are within approximately **100 metres** of each other.
+
+This creates a real-world confirmation that the two CrossPath journeys have actually connected.
+
+---
+
+## 💌 CrossPath Memory Card
+
+<img src="docs/screenshots/memory_card.jpeg" width="250">
+
+After a successful connection, CrossPath creates a Memory Card containing the connection details.
+
+The card includes:
+
+- Both traveller names
+- Meeting location
+- Meeting place type
+- Date
+- Common interests
+- Journey connection information
+
+The Memory Card provides a simple visual record of the moment when two journeys crossed.
 
 # 🏗️ Project Structure
 
@@ -548,14 +611,20 @@ crosspath/
 │   │   ├── register_screen.dart
 │   │   ├── home_screen.dart
 │   │   ├── profile_setup_screen.dart
+│   │   ├── profile_screen.dart
 │   │   ├── destination_screen.dart
 │   │   ├── journey_screen.dart
+│   │   ├── discover_match_screen.dart
+│   │   ├── shared_journey_screen.dart
+│   │   ├── memory_card_screen.dart
 │   │   └── firebase_test_screen.dart
 │   │
 │   ├── services/
 │   │   ├── auth_service.dart
 │   │   ├── matching_service.dart
-│   │   └── journey_data_service.dart
+│   │   ├── journey_data_service.dart
+│   │   ├── discover_service.dart
+│   │   └── active_match_service.dart
 │   │
 │   ├── firebase_options.dart
 │   └── main.dart
@@ -564,13 +633,20 @@ crosspath/
 │   └── matching_service_test.dart
 │
 ├── docs/
-│   └── images/
+│   └── screenshots/
+│       ├── discover.jpeg
+│       ├── firebase_test.jpeg
+│       ├── home_screen.jpeg
+│       ├── journey_screen.jpeg
+│       ├── matching-engine.jpeg
+│       ├── meetup_success.jpeg
+│       ├── memory_card.jpeg
+│       ├── profile_screen.jpeg
+│       └── splash_screen.jpeg
 │
 ├── pubspec.yaml
 └── README.md
-```
 
----
 
 # 🛠️ Technologies Used
 
@@ -671,7 +747,7 @@ Nested journey and matching access should remain carefully controlled as the app
 
 # 🧩 Current Development Status
 
-### Completed
+### ✅ Completed
 
 - [x] Flutter project setup
 - [x] Firebase integration
@@ -686,6 +762,7 @@ Nested journey and matching access should remain carefully controlled as the app
 - [x] Destination coordinates stored in Firestore
 - [x] Automatic destination distance calculation
 - [x] Journey completion logic
+- [x] Single active journey architecture
 - [x] GPS points stored in Firestore
 - [x] JourneyDataService
 - [x] Deterministic CrossPath matching engine
@@ -699,21 +776,17 @@ Nested journey and matching access should remain carefully controlled as the app
 - [x] Positive matching test
 - [x] Negative matching test
 - [x] Real Firebase journey-data test
-
-### 🚧 Next Development Steps
-
-- [ ] Secure cross-user journey matching
-- [ ] Candidate traveller discovery
-- [ ] Anonymous match notification
-- [ ] Mutual Discover mechanism
-- [ ] Identity reveal after mutual consent
-- [ ] Shared Journey
-- [ ] Memory Card
-- [ ] Map visualization
-- [ ] QR-based memory sharing
-- [ ] Improved privacy controls
-
----
+- [x] Candidate traveller discovery
+- [x] Anonymous match notification
+- [x] Mutual Discover mechanism
+- [x] Identity reveal after mutual consent
+- [x] Shared Journey creation
+- [x] Public meeting-place recommendation
+- [x] Real-time meetup GPS verification
+- [x] 100 m meetup proximity verification
+- [x] Meetup success confirmation
+- [x] CrossPath Memory Card
+- [x] Firestore-backed connection data
 
 # 🌟 Future Vision
 
@@ -721,16 +794,16 @@ CrossPath can evolve beyond simple journey matching into a platform for discover
 
 Future versions could include:
 
-- Shared journey planning
-- Public meeting-point suggestions
-- Memory cards
+- Combined journey navigation
+- Interactive route maps
+- Saved journey history
+- Rich journey visualizations
 - Travel communities
 - Event-based journey matching
 - Smart route recommendations
 - Privacy-preserving matching infrastructure
-- Rich journey visualizations
-
----
+- Cloud-based profile photos
+- CrossPath connection history
 
 # 💡 Why CrossPath?
 
