@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../services/active_match_service.dart';
 import '../services/discover_service.dart';
 import '../services/matching_service.dart';
+import 'shared_journey_screen.dart';
 
 class DiscoverMatchScreen extends StatefulWidget {
   final ActiveMatch match;
@@ -509,6 +510,7 @@ class _DiscoverMatchScreenState
 
           if (!otherUserDiscovered) ...[
             const SizedBox(height: 18),
+
             const CircularProgressIndicator(
               color: Colors.pinkAccent,
             ),
@@ -667,15 +669,31 @@ class _DiscoverMatchScreenState
 
           const SizedBox(height: 20),
 
+          // CREATE SHARED JOURNEY
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () {
-                ScaffoldMessenger.of(context)
-                    .showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Shared Journey is coming next!',
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        SharedJourneyScreen(
+                      otherUserId:
+                          widget.match.userId,
+                      otherUserName:
+                          (_revealedProfile?['name']
+                                  as String?) ??
+                              'Traveler',
+                      otherUserInterests:
+                          ((_revealedProfile?[
+                                      'interests']
+                                  as List?)
+                              ?.map(
+                                (e) => e.toString(),
+                              )
+                              .toList()) ??
+                          [],
                     ),
                   ),
                 );
